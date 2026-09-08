@@ -1,167 +1,335 @@
 # 🏋️‍♂️ Assignment 08: Gym & Fitness Club Management REST API
-> **Track:** Backend Development | **Level:** Beginner to Intermediate | **Estimated Time:** 5–7 Hours  
-> **Tech Stack:** Node.js, Express.js, MongoDB, Mongoose, Passport.js (Local Strategy), Express-Session, dotenv
 
----
+## 📌 Project Overview
 
-## 📌 1. Objective & Overview
+This project is a backend REST API for a Gym & Fitness Club Management System built using Node.js, Express.js, MongoDB, and Mongoose.
 
-Develop a full-featured backend API for a **Gym & Fitness Center Management System** using **MongoDB and Mongoose**. In this project, students will implement persistent membership lifecycle management (calculating plan expiry dates, subscription renewals, and membership status checks), class bookings with seat capacity constraints, and user authentication using **Passport.js**.
+The API manages gym memberships, membership expiry and renewal, fitness classes, class bookings, seat capacity, and user authentication using Passport.js with session-based authentication.
 
-### Key Learning Outcomes:
-- Designing Mongoose schemas with computed fields, date manipulation, and enum constraints.
-- Managing relational links between **Members**, **Fitness Classes**, and **Trainers** using Mongoose references (`populate`).
-- Implementing stateful session-based user authentication using Passport.js.
-- Writing custom business logic to prevent over-enrollment in fitness classes.
-- Utilizing Mongoose middleware (`pre-save` hooks) for automatic date calculations.
+The project also uses bcryptjs for password hashing and dotenv for environment configuration.
 
----
+## 🎯 Objectives
 
-## 🛠️ 2. Tech Stack & Dependencies
+The main objectives of this assignment are:
 
-```bash
-# Initialize project
-npm init -y
+- Implement persistent gym membership management.
+- Calculate membership expiry dates automatically.
+- Track active, expired, and frozen membership statuses.
+- Allow members to renew their memberships.
+- Create and manage fitness classes.
+- Allow authenticated members to book fitness classes.
+- Prevent bookings when a class reaches its maximum capacity.
+- Prevent expired members from booking classes.
+- Implement session-based authentication using Passport.js.
+- Store passwords securely using bcrypt hashing.
 
-# Install dependencies
-npm install express mongoose passport passport-local express-session bcryptjs dotenv cors
+## 🛠️ Technologies Used
 
-# Install dev dependencies
-npm install -D nodemon
-```
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- Passport.js
+- Passport Local Strategy
+- Express-Session
+- bcryptjs
+- dotenv
+- CORS
+- Postman
 
----
+## 📦 Installation
 
-## 🗄️ 3. Database Schemas (Mongoose Models)
+Install the project dependencies:
 
-### 1. Member / User Model (`models/User.js`)
-```javascript
-const mongoose = require('mongoose');
+npm install
 
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true, unique: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true },
-  membershipTier: {
-    type: String,
-    enum: ['Bronze', 'Silver', 'Gold', 'Platinum'],
-    default: 'Bronze'
-  },
-  membershipStatus: {
-    type: String,
-    enum: ['active', 'expired', 'frozen'],
-    default: 'active'
-  },
-  membershipExpiryDate: { type: Date, required: true },
-  emergencyContact: { type: String }
-}, { timestamps: true });
+Start the development server:
 
-module.exports = mongoose.model('User', userSchema);
-```
+npm run dev
 
-### 2. Fitness Class Model (`models/FitnessClass.js`)
-```javascript
-const mongoose = require('mongoose');
+The API runs on port 5050.
 
-const fitnessClassSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true }, // e.g., "HIIT Bootcamp", "Yoga Flow"
-  trainerName: { type: String, required: true },
-  scheduleDate: { type: Date, required: true },
-  durationMinutes: { type: Number, required: true, default: 60 },
-  maxCapacity: { type: Number, required: true, min: 1 },
-  enrolledMembers: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }]
-}, { timestamps: true });
+## 🔐 Environment Variables
 
-module.exports = mongoose.model('FitnessClass', fitnessClassSchema);
-```
+Create a .env file inside the assignment-08-gym-api folder.
 
----
+Add the following:
 
-## 📋 4. API Endpoints Specification
+PORT=5050
+MONGODB_URI=your_mongodb_connection_string
+SESSION_SECRET=your_session_secret
 
-### 🔐 Authentication (Passport-Local)
+Do not upload the .env file to GitHub.
 
-| Method | Endpoint | Description | Request Body Example | Status Codes |
-|---|---|---|---|---|
-| `POST` | `/api/auth/register` | Register new member with chosen membership plan | `{"username":"fit_sam","email":"sam@fit.com","password":"mypassword","membershipTier":"Gold","durationMonths":3}` | `201 Created`<br>`400 Bad Request` |
-| `POST` | `/api/auth/login` | Login via Passport Local | `{"username":"fit_sam","password":"mypassword"}` | `200 OK`<br>`401 Unauthorized` |
-| `GET` | `/api/auth/me` | Fetch active member profile & remaining days | None | `200 OK`<br>`401 Unauthorized` |
+The project uses .env.example as a reference for the required environment variables.
 
-### 🏋️‍♂️ Fitness Class & Booking Endpoints
+## 🗄️ Database Models
 
-| Method | Endpoint | Description | Request Body Example | Status Codes |
-|---|---|---|---|---|
-| `GET` | `/api/classes` | Fetch all upcoming classes (supports `?trainer=John`) | None | `200 OK` |
-| `GET` | `/api/classes/:id` | Get class details with enrolled members list | None | `200 OK`<br>`404 Not Found` |
-| `POST` | `/api/classes` | Create a new workout class | `{"title":"Zumba Cardio","trainerName":"Maria","scheduleDate":"2026-04-15T09:00:00Z","maxCapacity":20}` | `201 Created`<br>`400 Bad Request` |
-| `POST` | `/api/classes/:id/book` | Enroll logged-in user (Fails if class is full or user membership expired) | None | `200 OK`<br>`400 Class Full / Expired` |
-| `DELETE` | `/api/classes/:id/cancel` | Cancel member booking from class | None | `200 OK` |
+### User Model
 
-### 💳 Membership Management
+The User model stores gym member information including:
 
-| Method | Endpoint | Description | Request Body Example | Status Codes |
-|---|---|---|---|---|
-| `PATCH` | `/api/members/:id/renew` | Renew / extend membership expiry date | `{"additionalMonths": 6, "tier": "Platinum"}` | `200 OK`<br>`404 Not Found` |
-| `GET` | `/api/members/expired` | Get list of all expired memberships | None | `200 OK` |
+- Username
+- Email
+- Hashed password
+- Membership tier
+- Membership status
+- Membership expiry date
+- Emergency contact
+- Created and updated timestamps
 
----
+Membership tiers:
 
-## 🏗️ 5. Project Folder Architecture
+- Bronze
+- Silver
+- Gold
+- Platinum
 
-```text
-assignment-08-gym-api/
-├── config/
-│   ├── db.js                # Mongoose connection
-│   └── passport.js          # Passport Local strategy setup
-├── controllers/
-│   ├── authController.js    # Register with auto-expiry calculation
-│   ├── classController.js   # Class CRUD & booking capacity logic
-│   └── memberController.js  # Renewal & expired query handlers
-├── middleware/
-│   ├── authMiddleware.js    # Ensure session authentication
-│   └── checkActiveMember.js # Check member is not expired
-├── models/
-│   ├── FitnessClass.js
-│   └── User.js
-├── routes/
-│   ├── authRoutes.js
-│   ├── classRoutes.js
-│   └── memberRoutes.js
-├── .env.example
-├── .gitignore
-├── package.json
-├── server.js
-└── README.md
-```
+Membership statuses:
 
----
+- Active
+- Expired
+- Frozen
 
-## 🧪 6. Testing & Validation
+### FitnessClass Model
 
-1. Register a member with a 1-month membership and verify `membershipExpiryDate` is calculated exactly 30 days in the future.
-2. Create a class with `maxCapacity = 2`.
-3. Attempt to book 3 members into the class; verify the 3rd booking fails with `400 Bad Request: Class capacity reached`.
-4. Test `/api/members/expired` to view members whose `membershipExpiryDate < new Date()`.
+The FitnessClass model stores:
 
----
+- Class title
+- Trainer name
+- Schedule date
+- Duration
+- Maximum capacity
+- Enrolled members
 
-## 📊 7. Grading Rubric (100 Marks)
+Enrolled members are stored using references to User documents.
 
-| Evaluation Component | Marks |
-|---|:---:|
-| **Mongoose Schemas, Date Handling & Hooks** | 25 |
-| **Passport Session Authentication & Bcrypt Hashing** | 20 |
-| **Fitness Class CRUD & Capacity Validation Logic** | 25 |
-| **Membership Renewal & Expiry Checks** | 15 |
-| **Code Modularity, Status Codes & Error Handling** | 15 |
-| **Total Marks** | **100** |
+## 🔑 Authentication
 
----
+The application uses Passport.js Local Strategy for authentication.
 
-## 📤 8. Submission Guidelines
+Authentication includes:
 
-- Submit GitHub repository: `itm-assignment-08-gym-api`.
-- Include a Postman test suite with class booking and membership renewal requests.
+- Member registration
+- Member login
+- Session-based authentication
+- Current member profile
+- Logout
+- Password hashing using bcryptjs
+
+Authenticated routes require a valid user session.
+
+## 🌐 API Endpoints
+
+### Authentication
+
+POST /api/auth/register
+
+Registers a new gym member and calculates the membership expiry date.
+
+POST /api/auth/login
+
+Authenticates a member using Passport.js and creates a session.
+
+GET /api/auth/me
+
+Returns the currently authenticated member's profile and membership information.
+
+POST /api/auth/logout
+
+Logs out the currently authenticated member and destroys the session.
+
+### Fitness Classes
+
+GET /api/classes
+
+Returns upcoming fitness classes.
+
+GET /api/classes/:id
+
+Returns details of a specific fitness class including enrolled members.
+
+POST /api/classes
+
+Creates a new fitness class.
+
+POST /api/classes/:id/book
+
+Books the authenticated member into a fitness class.
+
+A booking is rejected when:
+
+- The class has reached maximum capacity.
+- The member's membership has expired.
+- The member is not authenticated.
+
+DELETE /api/classes/:id/cancel
+
+Cancels the authenticated member's booking from a fitness class.
+
+### Membership Management
+
+PATCH /api/members/:id/renew
+
+Renews or extends a member's membership expiry date and can update the membership tier.
+
+Example request:
+
+{
+  "additionalMonths": 6,
+  "tier": "Platinum"
+}
+
+GET /api/members/expired
+
+Returns members whose memberships have expired.
+
+## 📁 Project Structure
+
+Pallavi_sarovar_SamAltman8/
+└── assignment-08-gym-api/
+    ├── config/
+    │   ├── db.js
+    │   └── passport.js
+    ├── controllers/
+    │   ├── authController.js
+    │   ├── classController.js
+    │   └── memberController.js
+    ├── middleware/
+    │   ├── authMiddleware.js
+    │   └── checkActiveMember.js
+    ├── models/
+    │   ├── FitnessClass.js
+    │   └── User.js
+    ├── postman/
+    │   └── Gym-API.postman_collection.json
+    ├── routes/
+    │   ├── authRoutes.js
+    │   ├── classRoutes.js
+    │   └── memberRoutes.js
+    ├── .env.example
+    ├── .gitignore
+    ├── package.json
+    ├── package-lock.json
+    ├── README.md
+    └── server.js
+
+## 🧪 Testing
+
+The API was tested using Postman.
+
+The following functionality was tested successfully:
+
+- Member registration
+- Member login
+- Member profile retrieval
+- Fitness class creation
+- Successful class booking
+- Class capacity validation
+- Membership renewal
+- Expired member detection
+- Member logout
+
+### Class Capacity Test
+
+A fitness class was created with a maximum capacity of 2 members.
+
+The first two members were successfully booked.
+
+A third booking attempt was rejected with:
+
+400 Bad Request
+
+Class capacity reached
+
+This confirms that the API prevents over-enrollment.
+
+### Membership Renewal Test
+
+Membership renewal was tested using:
+
+PATCH /api/members/:id/renew
+
+The membership was successfully renewed and the membership tier was updated.
+
+### Expired Membership Test
+
+An expired member was created for testing.
+
+GET /api/members/expired
+
+successfully returned the expired member.
+
+## 📮 Postman Collection
+
+The Postman collection is included in:
+
+postman/Gym-API.postman_collection.json
+
+The collection contains requests for:
+
+- Register Member
+- Login
+- My Profile
+- Create Fitness Class
+- Get Upcoming Classes
+- Get Class By ID
+- Book Class
+- Cancel Booking
+- Renew Membership
+- Get Expired Members
+- Logout
+
+## 🏗️ Project Features
+
+- MongoDB database integration using Mongoose
+- Mongoose schemas and relationships
+- Membership expiry date handling
+- Membership status management
+- Mongoose pre-save middleware
+- Passport.js Local Strategy authentication
+- Express session authentication
+- bcrypt password hashing
+- Fitness class management
+- Class booking and cancellation
+- Class capacity validation
+- Active membership validation
+- Membership renewal
+- Expired membership detection
+- Modular controllers, routes, models, and middleware
+- HTTP status codes and error handling
+- Postman API testing
+
+## 📊 Assignment Requirements Covered
+
+This project covers the major requirements of Assignment 08:
+
+- Mongoose schemas with date handling and enum constraints
+- Membership expiry calculation
+- Membership renewal
+- Membership status checking
+- Passport.js session authentication
+- bcrypt password hashing
+- Fitness class management
+- Class booking and cancellation
+- Class capacity validation
+- Expired member detection
+- Modular project architecture
+- Error handling and HTTP status codes
+- Postman testing
+
+## 👩‍💻 Author
+
+Pallavi Sarovar
+
+Assignment 08: Gym & Fitness Club Management REST API
+
+## 📌 Notes
+
+The MongoDB connection is configured using environment variables.
+
+Sensitive information such as MongoDB credentials and session secrets should not be committed to GitHub.
+
+The project includes a Postman collection for testing the API endpoints.
+
+The implementation follows the requirements specified for Assignment 08: Gym & Fitness Club Management REST API.
