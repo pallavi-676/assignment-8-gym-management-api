@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/members/{{memberId}}/renew"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "additionalMonths": 6,
+      "tier": "Platinum"
+    }
+order: 9000

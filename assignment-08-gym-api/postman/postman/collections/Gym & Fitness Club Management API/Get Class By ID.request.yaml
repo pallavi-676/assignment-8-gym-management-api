@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/classes/{{classId}}"
+method: GET
+order: 6000
