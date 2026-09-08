@@ -51,16 +51,6 @@ The API runs on port 5050.
 
 ## 🔐 Environment Variables
 
-Create a .env file inside the assignment-08-gym-api folder.
-
-Add the following:
-
-PORT=5050
-MONGODB_URI=your_mongodb_connection_string
-SESSION_SECRET=your_session_secret
-
-Do not upload the .env file to GitHub.
-
 The project uses .env.example as a reference for the required environment variables.
 
 ## 🗄️ Database Models
@@ -186,6 +176,7 @@ Returns members whose memberships have expired.
 
 ## 📁 Project Structure
 
+<pre>
 Pallavi_sarovar_SamAltman8/
 └── assignment-08-gym-api/
     ├── config/
@@ -213,6 +204,7 @@ Pallavi_sarovar_SamAltman8/
     ├── package-lock.json
     ├── README.md
     └── server.js
+</pre>
 
 ## 🧪 Testing
 
@@ -230,13 +222,41 @@ The following functionality was tested successfully:
 - Expired member detection
 - Member logout
 
-### Class Capacity Test
+### 📸 1. Member Registration
 
-A fitness class was created with a maximum capacity of 2 members.
+The registration endpoint successfully created a new gym member and calculated the membership expiry date.
 
-The first two members were successfully booked.
+<img width="1271" height="769" alt="Screenshot 2026-09-07 at 20 51 53" src="https://github.com/user-attachments/assets/c111b32d-e743-4977-9e96-181f1d6fbd62" />
 
-A third booking attempt was rejected with:
+### 📸 2. Member Login
+
+The login endpoint successfully authenticated the registered member using Passport.js session-based authentication.
+
+<img width="1271" height="769" alt="Screenshot 2026-09-07 at 20 53 07" src="https://github.com/user-attachments/assets/7d23ed04-a0e1-47b8-bed0-d7801f47d0ac" />
+
+### 📸 3. My Profile
+
+The profile endpoint successfully returned the authenticated member's details and remaining membership days.
+
+<img width="1271" height="769" alt="Screenshot 2026-09-07 at 20 53 40" src="https://github.com/user-attachments/assets/717cb94a-ad8b-469f-b3a3-a9a3c0d4e132" />
+
+### 📸 4. Fitness Class Creation
+
+A fitness class was successfully created with a maximum capacity of 2 members.
+
+<img width="1271" height="769" alt="Screenshot 2026-09-07 at 20 53 56" src="https://github.com/user-attachments/assets/d72c2a2a-7291-408a-9b50-5267391abb41" />
+
+### 📸 5. Successful Class Booking
+
+An authenticated active member successfully booked a fitness class.
+
+<img width="1271" height="769" alt="Screenshot 2026-09-07 at 20 54 43" src="https://github.com/user-attachments/assets/781cc905-d3b6-45dd-a4e6-e499b3a9732d" />
+
+### 📸 6. Class Capacity Validation
+
+After two members filled the class, a third booking attempt was rejected because the class had reached its maximum capacity.
+
+The API returned:
 
 400 Bad Request
 
@@ -244,21 +264,25 @@ Class capacity reached
 
 This confirms that the API prevents over-enrollment.
 
-### Membership Renewal Test
+| Successful Booking | Capacity Reached |
+|:---:|:---:|
+| <img width="500" alt="Successful class booking" src="https://github.com/user-attachments/assets/7d77a361-8326-4acd-b6c1-a88c0f91868f" /> | <img width="500" alt="Class capacity reached" src="https://github.com/user-attachments/assets/f65ce894-b89b-46ad-90f7-2cf58f702f85" /> |
 
-Membership renewal was tested using:
 
-PATCH /api/members/:id/renew
+### 📸 7. Membership Renewal
 
-The membership was successfully renewed and the membership tier was updated.
+The membership was successfully renewed and the membership tier was updated to Platinum.
 
-### Expired Membership Test
+<img width="1271" height="769" alt="Screenshot 2026-09-07 at 21 01 24" src="https://github.com/user-attachments/assets/f131893e-4b9b-4c5f-bf1b-930efee10b5b" />
+
+
+### 📸 8. Expired Member Detection
 
 An expired member was created for testing.
 
-GET /api/members/expired
+GET /api/members/expired successfully returned the expired member.
 
-successfully returned the expired member.
+<img width="1271" height="769" alt="Screenshot 2026-09-07 at 21 08 41" src="https://github.com/user-attachments/assets/63eed83d-18b0-42e0-b7de-734a8250ff3f" />
 
 ## 📮 Postman Collection
 
