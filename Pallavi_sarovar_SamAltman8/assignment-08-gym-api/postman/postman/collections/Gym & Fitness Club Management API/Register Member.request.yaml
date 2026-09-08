@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "username": "fit_sam",
+      "email": "sam@fit.com",
+      "password": "mypassword",
+      "membershipTier": "Gold",
+      "durationMonths": 3,
+      "emergencyContact": "9999999999"
+    }
+order: 1000
