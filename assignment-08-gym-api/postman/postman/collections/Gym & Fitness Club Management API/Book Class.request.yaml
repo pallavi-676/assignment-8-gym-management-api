@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/api/classes/{{classId}}/book"
-method: POST
-order: 7000
